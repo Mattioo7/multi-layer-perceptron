@@ -110,8 +110,8 @@ class MLP:
 
         return dW, db
 
-    def step(self, lr: float | None, grads: tuple[list[np.ndarray], list[np.ndarray]]) -> None:
-        eta = float(lr) if lr is not None else self.learning_rate
+    def step(self, learning_rate: float | None, grads: tuple[list[np.ndarray], list[np.ndarray]]) -> None:
+        eta = float(learning_rate) if learning_rate is not None else self.learning_rate
         dW, db = grads
         for l in range(self.n_layers):
             self.W[l] -= eta * dW[l]
@@ -140,8 +140,8 @@ class MLP:
             loss = float(self.loss_fn(Y, Y_pred))
             history.append(loss)
             if verbose and ep % max(1, epochs // 10) == 0:
-                cur_lr = float(learning_rate) if learning_rate is not None else self.learning_rate
-                print(f"epoch={ep:4d}  loss={loss:.8f}  lr={cur_lr}")
+                cur_learning_rate = float(learning_rate) if learning_rate is not None else self.learning_rate
+                print(f"epoch={ep:4d}  loss={loss:.8f}  learning_rate={cur_learning_rate}")
         return history
 
 
