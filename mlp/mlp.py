@@ -8,7 +8,7 @@ from .losses import mse, d_mse
 
 class MLP:
     layer_sizes: list[int]
-    L: int
+    n_layers: int
     learning_rate: float
 
     activation: Callable[[np.ndarray], np.ndarray]
@@ -33,7 +33,7 @@ class MLP:
         # --- Walidacja i podstawowe parametry ---
         assert len(layer_sizes) >= 2, "Podaj co najmniej [n_in, n_out]"
         self.layer_sizes = layer_sizes
-        self.L = len(layer_sizes) - 1
+        self.n_layers = len(layer_sizes) - 1
         self.learning_rate = float(learning_rate)
 
         if seed is not None:
@@ -60,7 +60,7 @@ class MLP:
             raise ValueError(f"Nieznana funkcja straty: {loss}")
 
         # --- Inicjalizacja wag i biasów ---
-        for l in range(self.L):
+        for l in range(self.n_layers):
             n_in, n_out = layer_sizes[l], layer_sizes[l + 1]
             W_l = np.random.randn(n_in, n_out) * 0.01
             b_l = np.zeros((1, n_out), dtype=float)
@@ -75,29 +75,29 @@ class MLP:
         Z: list[np.ndarray] = [np.empty((0, 0))]  # placeholder dla indeksu 0
         A: list[np.ndarray] = [X]
 
-        for l in range(self.L - 1):
+        for l in range(self.n_layers - 1):
             z = A[l] @ self.W[l] + self.b[l]
             a = self.activation(z)
             Z.append(z)
             A.append(a)
 
-        zL = A[self.L - 1] @ self.W[self.L - 1] + self.b[self.L - 1]
-        yhat = zL  # liniowe wyjście
+        zL = A[self.n_layers - 1] @ self.W[self.n_layers - 1] + self.b[self.n_layers - 1]
+        Y_pred = zL  # liniowe wyjście
 
         Z.append(zL)
         self.Z = Z
         self.A = A
-        return yhat
+        return Y_pred
 
     def backward(self, X: np.ndarray, Y: np.ndarray) -> tuple[list[np.ndarray], list[np.ndarray]]:
         assert self.Z is not None and self.A is not None, "Najpierw wywołaj forward(X)"
-        Z, A, L = self.Z, self.A, self.L
+        Z, A, L = self.Z, self.A, self.n_layers
 
         dW: list[np.ndarray] = [np.zeros_like(Wl) for Wl in self.W]
         db: list[np.ndarray] = [np.zeros_like(bl) for bl in self.b]
 
-        Yhat = Z[L]
-        delta_next = self.d_loss_fn(Y, Yhat)
+        Y_pred = Z[L]
+        delta_next = self.d_loss_fn(Y, Y_pred)
 
         dW[L - 1] = A[L - 1].T @ delta_next
         db[L - 1] = np.sum(delta_next, axis=0, keepdims=True)
@@ -113,13 +113,13 @@ class MLP:
     def step(self, lr: float | None, grads: tuple[list[np.ndarray], list[np.ndarray]]) -> None:
         eta = float(lr) if lr is not None else self.learning_rate
         dW, db = grads
-        for l in range(self.L):
+        for l in range(self.n_layers):
             self.W[l] -= eta * dW[l]
             self.b[l] -= eta * db[l]
 
     def compute_loss(self, X: np.ndarray, Y: np.ndarray) -> float:
-        Yhat = self.forward(X)
-        return float(self.loss_fn(Y, Yhat))
+        Y_pred = self.forward(X)
+        return float(self.loss_fn(Y, Y_pred))
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         return self.forward(X)
@@ -128,19 +128,19 @@ class MLP:
         self,
         X: np.ndarray,
         Y: np.ndarray,
-        lr: float | None = None,
+        learning_rate: float | None = None,
         epochs: int = 1000,
         verbose: bool = False,
     ) -> list[float]:
         history: list[float] = []
         for ep in range(epochs):
-            Yhat = self.forward(X)
+            Y_pred = self.forward(X)
             grads = self.backward(X, Y)
-            self.step(lr, grads)
-            loss = float(self.loss_fn(Y, Yhat))
+            self.step(learning_rate, grads)
+            loss = float(self.loss_fn(Y, Y_pred))
             history.append(loss)
             if verbose and ep % max(1, epochs // 10) == 0:
-                cur_lr = float(lr) if lr is not None else self.learning_rate
+                cur_lr = float(learning_rate) if learning_rate is not None else self.learning_rate
                 print(f"epoch={ep:4d}  loss={loss:.8f}  lr={cur_lr}")
         return history
 
