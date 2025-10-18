@@ -1,0 +1,40 @@
+# === Python cache / kompilacja ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+*.egg
+*.pkl
+*.h5
+*.log
+
+# === Wirtualne środowiska ===
+venv/
+.venv/
+ENV/
+env/
+# (bo zawierają wszystkie zależności z pip i są odtwarzalne z pyproject.toml)
+
+# === IDE / edytory ===
+.idea/
+.vscode/
+*.iml
+# (lokalne ustawienia środowiska programistycznego, niepotrzebne innym użytkownikom)
+
+# === Systemowe / tymczasowe ===
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+# (pliki generowane przez system lub edytory – nie mają nic wspólnego z kodem)
+
+# === Dane i wyniki (opcjonalnie) ===
+lab1_data/
+outputs/
+results/
+# (jeśli lab1_data zawiera duże pliki treningowe lub dane testowe – lepiej nie commitować ich do repo)
+
+# === Notebooks / checkpoints (jeśli używasz Jupyter) ===
+.ipynb_checkpoints/

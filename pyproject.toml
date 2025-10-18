@@ -1,0 +1,18 @@
+[project]
+name = "multi-layer-perceptron"
+version = "0.1.0"
+description = "MLP for classification and regression"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.26",
+  "pandas>=2.2",
+  "matplotlib>=3.9"
+]
+
+[tool.flit.module]
+name = "mlp"
+
+[build-system]
+requires = ["flit_core>=3.2,<4"]
+build-backend = "flit_core.buildapi"
