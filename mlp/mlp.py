@@ -91,6 +91,7 @@ class MLP():
             if verbose and ep % max(1, epochs // 10) == 0:
                 print(f"epoch={ep:4d}  loss={loss:.6f}")
 
+
 # ------------------------- TEST -------------------------
 if __name__ == "__main__":
     np.set_printoptions(precision=8, suppress=True)
