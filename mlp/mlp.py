@@ -131,8 +131,8 @@ class MLP:
         dW = [np.zeros_like(Wl) for Wl in self.W]
         db = [np.zeros_like(bl) for bl in self.b]
 
-        Y_hat = A[L]  # post-activation output
-        delta_next = self.d_loss_fn(Y, Y_hat) * 1.0
+        Y_pred = A[L]  # post-activation output
+        delta_next = self.d_loss_fn(Y, Y_pred) * 1.0
 
         # output layer gradients
         dW[L - 1] = A[L - 1].T @ delta_next
@@ -155,21 +155,21 @@ class MLP:
             self.b[l] -= eta * db[l]
 
     def compute_loss(self, X: np.ndarray, Y: np.ndarray) -> float:
-        Y_hat = self.forward(X)
-        return float(self.loss_fn(Y, Y_hat))
+        Y_pred = self.forward(X)
+        return float(self.loss_fn(Y, Y_pred))
 
     def predict(self, X: np.ndarray, return_proba: bool = False) -> np.ndarray:
-        Y_hat = self.forward(X)
+        Y_pred = self.forward(X)
         if self.task == "regression":
-            return Y_hat
+            return Y_pred
         if self.task == "binary":
             if return_proba:
-                return Y_hat
-            return (Y_hat >= 0.5).astype(int)
+                return Y_pred
+            return (Y_pred >= 0.5).astype(int)
         # multiclass
         if return_proba:
-            return Y_hat
-        return np.argmax(Y_hat, axis=1).reshape(-1, 1)
+            return Y_pred
+        return np.argmax(Y_pred, axis=1).reshape(-1, 1)
 
     # helper: convert 1D labels to one-hot encoding for multiclass
     @staticmethod
@@ -201,10 +201,10 @@ class MLP:
 
         history: list[float] = []
         for ep in range(epochs):
-            Y_hat = self.forward(X)
+            Y_pred = self.forward(X)
             grads = self.backward(X, Y)
             self.step(learning_rate, grads)
-            loss = float(self.loss_fn(Y, Y_hat))
+            loss = float(self.loss_fn(Y, Y_pred))
             history.append(loss)
             if verbose and ep % max(1, epochs // 10) == 0:
                 cur_lr = float(learning_rate) if learning_rate is not None else self.learning_rate
@@ -217,7 +217,7 @@ if __name__ == "__main__":
     np.set_printoptions(precision=6, suppress=True)
 
     # === Regression ===
-    net_r = MLP(layer_sizes=[2, 16, 1], task="regression", learning_rate=0.01, seed=0)
+    net_r = MLP(layer_sizes=[2, 16, 1], task="regression", activation="sigmoid", learning_rate=0.01, seed=0)
     rng = np.random.default_rng(1)
     Xr = rng.normal(size=(512, 2))
     Yr = (2 * Xr[:, :1] - 3 * Xr[:, 1:2]) + 0.05 * rng.normal(size=(512, 1))
@@ -227,7 +227,7 @@ if __name__ == "__main__":
     print("\n")
 
     # === Binary classification ===
-    net_b = MLP(layer_sizes=[2, 8, 1], task="binary", learning_rate=0.05, seed=0)
+    net_b = MLP(layer_sizes=[2, 8, 1], task="binary", activation="sigmoid", learning_rate=0.05, seed=0)
     Xb = rng.normal(size=(400, 2))
     yb = ((Xb[:, 0] * Xb[:, 1]) > 0).astype(int).reshape(-1, 1)  # XOR-like: sign of product
     print("Bin loss start:", net_b.compute_loss(Xb, yb))
@@ -238,11 +238,11 @@ if __name__ == "__main__":
     print("\n")
 
     # === Multiclass classification (K=3) ===
-    net_m = MLP(layer_sizes=[2, 16, 3], task="multiclass", learning_rate=0.05, seed=0)
+    net_m = MLP(layer_sizes=[2, 16, 3], task="multiclass", activation="sigmoid", learning_rate=0.05, seed=0)
     Xm = rng.normal(size=(450, 2))
     ym_idx = (Xm[:, 0] > 0).astype(int) + (Xm[:, 1] > 0).astype(int)  # classes 0/1/2
     print("MC loss start:", net_m.compute_loss(Xm, net_m._to_one_hot(ym_idx, 3)))
-    hist_m = net_m.fit(Xm, ym_idx.reshape(-1, 1), epochs=1500)  # one-hot created automatically
+    hist_m = net_m.fit(Xm, ym_idx.reshape(-1, 1), epochs=1500)
     print("MC loss end:  ", hist_m[-1])
     preds_m = net_m.predict(Xm)
     print("MC acc ~:", (preds_m.ravel() == ym_idx).mean())
