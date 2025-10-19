@@ -34,8 +34,8 @@ class MLP:
     W: list[np.ndarray]
     b: list[np.ndarray]
 
-    Z: list[np.ndarray] | None
-    A: list[np.ndarray] | None
+    Z: list[np.ndarray] | None # pre-activation values
+    A: list[np.ndarray] | None # post-activation values
 
     def __init__(
         self,
@@ -104,30 +104,31 @@ class MLP:
             f"X has shape {X.shape}, expected (m, {self.layer_sizes[0]})"
         )
 
-        Z: list[np.ndarray] = [np.empty((0, 0))]
-        A: list[np.ndarray] = [X]
+        Z: list[np.ndarray] = [np.empty((0, 0))] # placeholder for input layer; # pre-activation values
+        A: list[np.ndarray] = [X] # activations, starting with input; # post-activation values
 
         # hidden layers
-        for l in range(self.n_layers - 1):
-            z = A[l] @ self.W[l] + self.b[l]
+        for layer in range(self.n_layers - 1):
+            z = A[layer] @ self.W[layer] + self.b[layer]
             a = self.activation(z)
             Z.append(z)
             A.append(a)
 
         # output layer
-        zL = A[self.n_layers - 1] @ self.W[self.n_layers - 1] + self.b[self.n_layers - 1]
-        aL = self.out_activation(zL)
+        z_out = A[self.n_layers - 1] @ self.W[self.n_layers - 1] + self.b[self.n_layers - 1]
+        a_out = self.out_activation(z_out)
 
-        Z.append(zL)
-        A.append(aL)
+        Z.append(z_out)
+        A.append(a_out)
 
         self.Z, self.A = Z, A
-        return aL
+        return a_out
 
-    def backward(self, X: np.ndarray, Y: np.ndarray) -> tuple[list[np.ndarray], list[np.ndarray]]:
+    def backward(self, Y: np.ndarray) -> tuple[list[np.ndarray], list[np.ndarray]]:
         assert self.Z is not None and self.A is not None, "Call forward(X) first"
         Z, A, L = self.Z, self.A, self.n_layers
 
+        # initialize gradients
         dW = [np.zeros_like(Wl) for Wl in self.W]
         db = [np.zeros_like(bl) for bl in self.b]
 
@@ -139,10 +140,10 @@ class MLP:
         db[L - 1] = np.sum(delta_next, axis=0, keepdims=True)
 
         # hidden layers
-        for l in range(L - 2, -1, -1):
-            delta_l = (delta_next @ self.W[l + 1].T) * self.d_activation(Z[l + 1])
-            dW[l] = A[l].T @ delta_l
-            db[l] = np.sum(delta_l, axis=0, keepdims=True)
+        for layer in range(L - 2, -1, -1):
+            delta_l = (delta_next @ self.W[layer + 1].T) * self.d_activation(Z[layer + 1])
+            dW[layer] = A[layer].T @ delta_l
+            db[layer] = np.sum(delta_l, axis=0, keepdims=True)
             delta_next = delta_l
 
         return dW, db
@@ -171,9 +172,8 @@ class MLP:
             return Y_pred
         return np.argmax(Y_pred, axis=1).reshape(-1, 1)
 
-    # helper: convert 1D labels to one-hot encoding for multiclass
     @staticmethod
-    def _to_one_hot(y: np.ndarray, n_classes: int) -> np.ndarray:
+    def _to_one_hot_encoding(y: np.ndarray, n_classes: int) -> np.ndarray:
         if y.ndim == 2 and y.shape[1] == 1:
             y = y.ravel()
         one_hot = np.zeros((y.shape[0], n_classes), dtype=float)
@@ -197,12 +197,12 @@ class MLP:
             # expect one-hot (m, n_classes); if y has shape (m,) or (m,1) with class indices,
             # create one-hot using output layer size.
             if one_hot_if_needed and (Y.ndim == 1 or (Y.ndim == 2 and Y.shape[1] == 1)):
-                Y = self._to_one_hot(Y, self.layer_sizes[-1])
+                Y = self._to_one_hot_encoding(Y, self.layer_sizes[-1])
 
         history: list[float] = []
         for ep in range(epochs):
             Y_pred = self.forward(X)
-            grads = self.backward(X, Y)
+            grads = self.backward(Y)
             self.step(learning_rate, grads)
             loss = float(self.loss_fn(Y, Y_pred))
             history.append(loss)
@@ -241,7 +241,7 @@ if __name__ == "__main__":
     net_m = MLP(layer_sizes=[2, 16, 3], task="multiclass", activation="sigmoid", learning_rate=0.05, seed=0)
     Xm = rng.normal(size=(450, 2))
     ym_idx = (Xm[:, 0] > 0).astype(int) + (Xm[:, 1] > 0).astype(int)  # classes 0/1/2
-    print("MC loss start:", net_m.compute_loss(Xm, net_m._to_one_hot(ym_idx, 3)))
+    print("MC loss start:", net_m.compute_loss(Xm, net_m._to_one_hot_encoding(ym_idx, 3)))
     hist_m = net_m.fit(Xm, ym_idx.reshape(-1, 1), epochs=1500)
     print("MC loss end:  ", hist_m[-1])
     preds_m = net_m.predict(Xm)
