@@ -14,7 +14,7 @@ def identity(x: ArrayLike) -> np.ndarray:
     return np.asarray(x)
 
 def softmax(x: np.ndarray, axis: int = 1) -> np.ndarray:
-    x_shift = x - np.max(x, axis=axis, keepdims=True)
+    x_shift = x - np.max(x, axis=axis, keepdims=True) # for numerical stability, to avoid overflow
     exps = np.exp(x_shift)
     return exps / np.sum(exps, axis=axis, keepdims=True)
 
