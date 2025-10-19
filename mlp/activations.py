@@ -10,6 +10,14 @@ def d_sigmoid(x: ArrayLike) -> np.ndarray:
     s = sigmoid(x)
     return s * (1 - s)
 
+def identity(x: ArrayLike) -> np.ndarray:
+    return np.asarray(x)
+
+def softmax(x: np.ndarray, axis: int = 1) -> np.ndarray:
+    x_shift = x - np.max(x, axis=axis, keepdims=True)
+    exps = np.exp(x_shift)
+    return exps / np.sum(exps, axis=axis, keepdims=True)
+
 if __name__ == "__main__":
     x = np.array([-2.0, 0.0, 2.0])
     y = sigmoid(x)
@@ -23,3 +31,6 @@ if __name__ == "__main__":
     print("\nDerivative:", dy)
     print("Expected dSigmoid:", [0.10499359, 0.25, 0.10499359])
     print("Difference:", dy - np.array([0.10499359, 0.25, 0.10499359]))
+
+    X = np.array([[1.0, 2.0, 3.0]])
+    print("\nSoftmax row sums (should be 1):", softmax(X).sum(axis=1))

@@ -1,10 +1,26 @@
 import numpy as np
 
+import numpy as np
+
 def mse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return np.mean((y_pred - y_true) ** 2)
 
-def d_mse(y_true: np.ndarray, y_pred: np.ndarray) -> np.array:
+def d_mse(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
     return 2 * (y_pred - y_true) / y_true.size
+
+def binary_cross_entropy(y_true: np.ndarray, y_pred: np.ndarray, eps: float = 1e-12) -> float:
+    y_pred = np.clip(y_pred, eps, 1 - eps)
+    return -np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
+
+def d_binary_cross_entropy(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
+    return (y_pred - y_true) / y_true.size
+
+def cross_entropy(y_true: np.ndarray, y_pred: np.ndarray, eps: float = 1e-12) -> float:
+    y_pred = np.clip(y_pred, eps, 1.0)
+    return -np.mean(np.sum(y_true * np.log(y_pred), axis=1))
+
+def d_cross_entropy(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
+    return (y_pred - y_true) / y_true.shape[0]
 
 if __name__ == "__main__":
     import numpy as np
