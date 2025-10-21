@@ -216,13 +216,15 @@ class MLP:
 if __name__ == "__main__":
     np.set_printoptions(precision=6, suppress=True)
 
+    rng = np.random.default_rng(1)
+
     # === Regression ===
     net_r = MLP(layer_sizes=[2, 16, 1], task="regression", activation="sigmoid", learning_rate=0.01, seed=0)
-    rng = np.random.default_rng(1)
     Xr = rng.normal(size=(512, 2))
     Yr = (2 * Xr[:, :1] - 3 * Xr[:, 1:2]) + 0.05 * rng.normal(size=(512, 1))
+    print("=== Regression test ===")
     print("Reg loss start:", net_r.compute_loss(Xr, Yr))
-    hist_r = net_r.fit(Xr, Yr, epochs=2000)
+    hist_r = net_r.fit(Xr, Yr, epochs=2000, verbose=True)
     print("Reg loss end:  ", hist_r[-1])
     print("\n")
 
@@ -230,19 +232,49 @@ if __name__ == "__main__":
     net_b = MLP(layer_sizes=[2, 8, 1], task="binary", activation="sigmoid", learning_rate=0.05, seed=0)
     Xb = rng.normal(size=(400, 2))
     yb = ((Xb[:, 0] * Xb[:, 1]) > 0).astype(int).reshape(-1, 1)  # XOR-like: sign of product
-    print("Bin loss start:", net_b.compute_loss(Xb, yb))
-    hist_b = net_b.fit(Xb, yb, epochs=1000)
-    print("Bin loss end:  ", hist_b[-1])
-    preds_b = net_b.predict(Xb)
-    print("Bin acc ~:", (preds_b.ravel() == yb.ravel()).mean())
-    print("\n")
 
-    # === Multiclass classification (K=3) ===
-    net_m = MLP(layer_sizes=[2, 16, 3], task="multiclass", activation="sigmoid", learning_rate=0.05, seed=0)
-    Xm = rng.normal(size=(450, 2))
-    ym_idx = (Xm[:, 0] > 0).astype(int) + (Xm[:, 1] > 0).astype(int)  # classes 0/1/2
-    print("MC loss start:", net_m.compute_loss(Xm, net_m._to_one_hot_encoding(ym_idx, 3)))
-    hist_m = net_m.fit(Xm, ym_idx.reshape(-1, 1), epochs=1500)
-    print("MC loss end:  ", hist_m[-1])
-    preds_m = net_m.predict(Xm)
-    print("MC acc ~:", (preds_m.ravel() == ym_idx).mean())
+    print("=== Binary classification test ===")
+    print("Bin loss start:", net_b.compute_loss(Xb, yb))
+    hist_b = net_b.fit(Xb, yb, epochs=100000, verbose=True)
+    print("Bin loss end:  ", hist_b[-1])
+
+    preds_b = net_b.predict(Xb)
+    acc_b = np.mean(preds_b == yb)
+    print(f"Binary classification accuracy: {acc_b:.4f}")
+
+
+
+# # ------------------------- EXAMPLES -------------------------
+# if __name__ == "__main__":
+#     np.set_printoptions(precision=6, suppress=True)
+#
+#     # === Regression ===
+#     net_r = MLP(layer_sizes=[2, 16, 1], task="regression", activation="sigmoid", learning_rate=0.01, seed=0)
+#     rng = np.random.default_rng(1)
+#     Xr = rng.normal(size=(512, 2))
+#     Yr = (2 * Xr[:, :1] - 3 * Xr[:, 1:2]) + 0.05 * rng.normal(size=(512, 1))
+#     print("Reg loss start:", net_r.compute_loss(Xr, Yr))
+#     hist_r = net_r.fit(Xr, Yr, epochs=2000)
+#     print("Reg loss end:  ", hist_r[-1])
+#     print("\n")
+#
+#     # === Binary classification ===
+#     net_b = MLP(layer_sizes=[2, 8, 1], task="binary", activation="sigmoid", learning_rate=0.05, seed=0)
+#     Xb = rng.normal(size=(400, 2))
+#     yb = ((Xb[:, 0] * Xb[:, 1]) > 0).astype(int).reshape(-1, 1)  # XOR-like: sign of product
+#     print("Bin loss start:", net_b.compute_loss(Xb, yb))
+#     hist_b = net_b.fit(Xb, yb, epochs=1000)
+#     print("Bin loss end:  ", hist_b[-1])
+#     preds_b = net_b.predict(Xb)
+#     print("Bin acc ~:", (preds_b.ravel() == yb.ravel()).mean())
+#     print("\n")
+#
+#     # === Multiclass classification (K=3) ===
+#     net_m = MLP(layer_sizes=[2, 16, 3], task="multiclass", activation="sigmoid", learning_rate=0.05, seed=0)
+#     Xm = rng.normal(size=(450, 2))
+#     ym_idx = (Xm[:, 0] > 0).astype(int) + (Xm[:, 1] > 0).astype(int)  # classes 0/1/2
+#     print("MC loss start:", net_m.compute_loss(Xm, net_m._to_one_hot_encoding(ym_idx, 3)))
+#     hist_m = net_m.fit(Xm, ym_idx.reshape(-1, 1), epochs=1500)
+#     print("MC loss end:  ", hist_m[-1])
+#     preds_m = net_m.predict(Xm)
+#     print("MC acc ~:", (preds_m.ravel() == ym_idx).mean())

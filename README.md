@@ -5,3 +5,4 @@
 - testy/eksperymenty
 - podział zbioru na train/val/test
 - lepsza inicjalizacja wag
+- konfigurowalne biasy
