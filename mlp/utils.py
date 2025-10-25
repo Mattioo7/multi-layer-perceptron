@@ -69,30 +69,3 @@ def plot_predictions(y_true, y_pred, title="Predictions vs True"):
     plt.title(title)
     plt.grid(True)
     plt.show()
-
-
-# === RUN EXPERIMENTS ===
-def run_classification_experiment(model, X, y):
-    """
-    Train and evaluate an MLP on a classification dataset.
-    """
-    X_train, X_test, y_train, y_test = train_test_split(X, y)
-    losses = model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-
-    acc = accuracy(y_test, y_pred)
-    print(f"Accuracy: {acc:.3f}")
-    return acc, losses
-
-
-def run_regression_experiment(model, X, y):
-    """
-    Train and evaluate an MLP on a regression dataset.
-    """
-    X_train, X_test, y_train, y_test = train_test_split(X, y)
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-
-    error = mse(y_test, y_pred)
-    print(f"MSE: {error:.4f}")
-    return error
