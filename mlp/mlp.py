@@ -37,6 +37,8 @@ class MLP:
     Z: list[np.ndarray] | None # pre-activation values
     A: list[np.ndarray] | None # post-activation values
 
+    loss_history: list[float]
+
     def __init__(
         self,
         layer_sizes: list[int],
@@ -209,7 +211,10 @@ class MLP:
             if verbose and ep % max(1, epochs // 10) == 0:
                 cur_lr = float(learning_rate) if learning_rate is not None else self.learning_rate
                 print(f"epoch={ep:4d}  loss={loss:.8f}  lr={cur_lr}")
+        
+        self.loss_history = history
         return history
+
 
 
 # ------------------------- EXAMPLES -------------------------

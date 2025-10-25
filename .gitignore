@@ -38,3 +38,5 @@ results/
 
 # === Notebooks / checkpoints (jeśli używasz Jupyter) ===
 .ipynb_checkpoints/
+
+project1.zip
