@@ -8,10 +8,22 @@ def load_dataset(path: str):
     """
     Load a CSV dataset. Assumes all columns except the last are features (X)
     and the last column is the target (y).
+
+    Also normalizes binary labels:
+      - {1, 2} -> {0, 1}
+      - {-1, 1} -> {0, 1}
     """
     df = pd.read_csv(path)
     X = df.iloc[:, :-1].to_numpy(dtype=float)
     y = df.iloc[:, -1].to_numpy()
+
+    # --- Normalize binary labels ---
+    unique_vals = np.unique(y)
+    if set(unique_vals) == {1, 2}:
+        y = y - 1
+    elif set(unique_vals) == {-1, 1}:
+        y = (y + 1) // 2
+
     return X, y
 
 

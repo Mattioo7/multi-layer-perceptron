@@ -135,6 +135,10 @@ class MLP:
         db = [np.zeros_like(bl) for bl in self.b]
 
         Y_pred = A[L]  # post-activation output
+        # if self.task == "binary":
+        #     delta_next = (self.A[-1] - Y)
+        # else:
+        #     delta_next = self.d_loss_fn(Y, Y_pred)
         delta_next = self.d_loss_fn(Y, Y_pred) * 1.0
 
         # output layer gradients
