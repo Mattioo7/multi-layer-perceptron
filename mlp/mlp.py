@@ -10,6 +10,7 @@ from .losses import (
     binary_cross_entropy, d_binary_cross_entropy,
     cross_entropy, d_cross_entropy
 )
+from .utils import plot_loss, plot_predictions, plot_decision_boundary, plot_weight_evolution
 
 TaskType = Literal["regression", "binary", "multiclass"]
 
@@ -38,6 +39,7 @@ class MLP:
     A: list[np.ndarray] | None # post-activation values
 
     loss_history: list[float]
+    weight_history: list[list[np.ndarray]]
 
     def __init__(
         self,
@@ -206,18 +208,25 @@ class MLP:
                 Y = self._to_one_hot_encoding(Y, self.layer_sizes[-1])
 
         history: list[float] = []
+        weight_history: list[list[float]] = []
         for ep in range(epochs):
             Y_pred = self.forward(X)
             grads = self.backward(Y)
             self.step(learning_rate, grads)
             loss = float(self.loss_fn(Y, Y_pred))
             history.append(loss)
+
+            # Record weight norms
+            current_weight_norms = [float(np.linalg.norm(Wl)) for Wl in self.W]
+            weight_history.append(current_weight_norms)
+
             if verbose and ep % max(1, epochs // 10) == 0:
                 cur_lr = float(learning_rate) if learning_rate is not None else self.learning_rate
                 print(f"epoch={ep:4d}  loss={loss:.8f}  lr={cur_lr}")
         
         self.loss_history = history
-        return history
+        self.weight_history = weight_history
+        return history, weight_history
 
 
 
@@ -233,8 +242,12 @@ if __name__ == "__main__":
     Yr = (2 * Xr[:, :1] - 3 * Xr[:, 1:2]) + 0.05 * rng.normal(size=(512, 1))
     print("=== Regression test ===")
     print("Reg loss start:", net_r.compute_loss(Xr, Yr))
-    hist_r = net_r.fit(Xr, Yr, epochs=2000, verbose=True)
+    hist_r, weight_hist_r = net_r.fit(Xr, Yr, epochs=2000, verbose=True)
     print("Reg loss end:  ", hist_r[-1])
+    plot_loss(hist_r, title="Regression Training Loss")
+    Xr_preds = net_r.predict(Xr)
+    plot_predictions(Yr, Xr_preds, title="Regression Predictions vs True")
+    plot_weight_evolution(weight_hist_r, title="Regression Weight Evolution")
     print("\n")
 
     # === Binary classification ===
@@ -244,12 +257,15 @@ if __name__ == "__main__":
 
     print("=== Binary classification test ===")
     print("Bin loss start:", net_b.compute_loss(Xb, yb))
-    hist_b = net_b.fit(Xb, yb, epochs=100000, verbose=True)
+    hist_b, weight_hist_b = net_b.fit(Xb, yb, epochs=100000, verbose=True)
     print("Bin loss end:  ", hist_b[-1])
 
     preds_b = net_b.predict(Xb)
     acc_b = np.mean(preds_b == yb)
     print(f"Binary classification accuracy: {acc_b:.4f}")
+    plot_loss(hist_b, title="Binary Classification Training Loss")
+    plot_decision_boundary(net_b, Xb, yb, title="Binary Classification Decision Boundary")
+    plot_weight_evolution(weight_hist_b, title="Binary Classification Weight Evolution")
 
 
 

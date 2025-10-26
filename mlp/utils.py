@@ -81,3 +81,46 @@ def plot_predictions(y_true, y_pred, title="Predictions vs True"):
     plt.title(title)
     plt.grid(True)
     plt.show()
+
+
+def plot_decision_boundary(model, X, y, title="Decision Boundary"):
+    """
+    Plots the decision boundary for a trained classifier in a 2D feature space.
+    """
+    x_min, x_max = X[:, 0].min() - 0.1, X[:, 0].max() + 0.1
+    y_min, y_max = X[:, 1].min() - 0.1, X[:, 1].max() + 0.1
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, 200),
+                         np.linspace(y_min, y_max, 200))
+
+    # Predict on the meshgrid
+    grid_points = np.c_[xx.ravel(), yy.ravel()]
+    Z = model.predict(grid_points)
+    Z = Z.reshape(xx.shape)
+
+    # Plot the contour and training examples
+    plt.contourf(xx, yy, Z, alpha=0.4, cmap=plt.cm.RdYlBu)
+    plt.scatter(X[:, 0], X[:, 1], c=y.ravel(), s=20, edgecolor='k', cmap=plt.cm.RdYlBu)
+    plt.title(title)
+    plt.xlabel("Feature 1")
+    plt.ylabel("Feature 2")
+    plt.grid(True)
+    plt.show()
+
+
+def plot_weight_evolution(weight_history, title="Weight Evolution"):
+    """
+    Plots the evolution of the L2 norm of weights for each layer over epochs.
+    """
+    # weight_history is a list of lists, where each inner list contains the L2 norm of weights for a layer at a given epoch.
+    weight_history_np = np.array(weight_history)
+    num_layers = weight_history_np.shape[1]
+
+    for i in range(num_layers):
+        plt.plot(weight_history_np[:, i], label=f'Layer {i+1} Weights')
+
+    plt.title(title)
+    plt.xlabel("Epoch")
+    plt.ylabel("L2 Norm of Weights")
+    plt.grid(True)
+    plt.legend()
+    plt.show()
