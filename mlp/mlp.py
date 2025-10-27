@@ -19,6 +19,7 @@ class MLP:
     n_layers: int
     learning_rate: float
     task: TaskType
+    use_bias: bool
 
     # hidden layers
     activation: Callable[[np.ndarray], np.ndarray]
@@ -48,6 +49,7 @@ class MLP:
         activation: str,
         learning_rate: float = 1e-2,
         seed: int | None = None,
+        use_bias: bool = True,
     ):
         assert len(layer_sizes) >= 2, "Provide at least [n_in, n_out]"
         assert task in ("regression", "binary", "multiclass"), \
@@ -62,6 +64,8 @@ class MLP:
 
         if seed is not None:
             np.random.seed(seed)
+
+        self.use_bias = use_bias
 
         # --- Initialize lists and buffers ---
         self.W: list[np.ndarray] = []
@@ -127,13 +131,13 @@ class MLP:
 
         # hidden layers
         for layer in range(self.n_layers - 1):
-            z = A[layer] @ self.W[layer] + self.b[layer]
+            z = A[layer] @ self.W[layer] + (self.b[layer] if self.use_bias else 0)
             a = self.activation(z)
             Z.append(z)
             A.append(a)
 
         # output layer
-        z_out = A[self.n_layers - 1] @ self.W[self.n_layers - 1] + self.b[self.n_layers - 1]
+        z_out = A[self.n_layers - 1] @ self.W[self.n_layers - 1] + (self.b[self.n_layers - 1] if self.use_bias else 0)
         a_out = self.out_activation(z_out)
 
         Z.append(z_out)
@@ -159,13 +163,13 @@ class MLP:
 
         # output layer gradients
         dW[L - 1] = A[L - 1].T @ delta_next
-        db[L - 1] = np.sum(delta_next, axis=0, keepdims=True)
+        db[L - 1] = np.sum(delta_next, axis=0, keepdims=True) if self.use_bias else np.zeros_like(db[L - 1])
 
         # hidden layers
         for layer in range(L - 2, -1, -1):
             delta_l = (delta_next @ self.W[layer + 1].T) * self.d_activation(Z[layer + 1])
             dW[layer] = A[layer].T @ delta_l
-            db[layer] = np.sum(delta_l, axis=0, keepdims=True)
+            db[layer] = np.sum(delta_l, axis=0, keepdims=True) if self.use_bias else np.zeros_like(db[layer])
             delta_next = delta_l
 
         return dW, db
