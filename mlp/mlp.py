@@ -4,7 +4,7 @@ from typing import Literal
 
 import numpy as np
 
-from .activations import sigmoid, d_sigmoid, identity, softmax
+from .activations import sigmoid, d_sigmoid, identity, softmax, gelu, gelu_derivative
 from .losses import (
     mse, d_mse,
     binary_cross_entropy, d_binary_cross_entropy,
@@ -52,8 +52,8 @@ class MLP:
         assert len(layer_sizes) >= 2, "Provide at least [n_in, n_out]"
         assert task in ("regression", "binary", "multiclass"), \
             f"Invalid task: {task}. Allowed: 'regression', 'binary', 'multiclass'"
-        assert activation in ("sigmoid",), \
-            f"Invalid activation function: {activation}. Allowed: 'sigmoid'"
+        assert activation in ("sigmoid", "gelu", "identity"), \
+            f"Invalid activation function: {activation}. Allowed: 'sigmoid', 'gelu', 'identity'"
 
         self.layer_sizes = layer_sizes
         self.n_layers = len(layer_sizes) - 1
@@ -73,6 +73,12 @@ class MLP:
         if activation == "sigmoid":
             self.activation = sigmoid
             self.d_activation = d_sigmoid
+        elif activation == "gelu":
+            self.activation = gelu
+            self.d_activation = gelu_derivative
+        elif activation == "identity":
+            self.activation = identity
+            self.d_activation = lambda x: 1
         else:
             raise ValueError(f"Unknown activation function: {activation}")
 
@@ -84,7 +90,7 @@ class MLP:
             self.d_loss_fn = d_mse
         elif task == "binary":
             self.out_activation = sigmoid
-            self.d_out_activation = identity
+            self.d_out_activation = d_sigmoid
             self.loss_fn = binary_cross_entropy
             self.d_loss_fn = d_binary_cross_entropy
         elif task == "multiclass":

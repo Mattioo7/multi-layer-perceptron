@@ -14,7 +14,6 @@ def binary_cross_entropy(y_true: np.ndarray, y_pred: np.ndarray, eps: float = 1e
 
 def d_binary_cross_entropy(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
     return (y_pred - y_true) / y_true.size
-    # return (y_pred - y_true)
 
 def cross_entropy(y_true: np.ndarray, y_pred: np.ndarray, eps: float = 1e-12) -> float:
     y_pred = np.clip(y_pred, eps, 1.0)
