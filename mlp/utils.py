@@ -119,7 +119,7 @@ def plot_weight_evolution(weight_history, title="Weight Evolution"):
         plt.plot(weight_history_np[:, i], label=f'Layer {i+1} Weights')
 
     plt.title(title)
-    plt.xlabel("Epoch")
+    plt.xlabel("Epoka")
     plt.ylabel("L2 Norm of Weights")
     plt.grid(True)
     plt.legend()

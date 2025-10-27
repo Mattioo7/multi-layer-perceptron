@@ -22,6 +22,7 @@ def cross_entropy(y_true: np.ndarray, y_pred: np.ndarray, eps: float = 1e-12) ->
 def d_cross_entropy(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
     return (y_pred - y_true) / y_true.shape[0]
 
+    return np.sign(y_pred - y_true) / y_true.size
 if __name__ == "__main__":
     import numpy as np
 
