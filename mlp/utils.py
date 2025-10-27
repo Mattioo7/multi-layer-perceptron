@@ -9,22 +9,35 @@ def load_dataset(path: str):
     Load a CSV dataset. Assumes all columns except the last are features (X)
     and the last column is the target (y).
 
-    Also normalizes binary labels:
-      - {1, 2} -> {0, 1}
-      - {-1, 1} -> {0, 1}
+    Automatically distinguishes between classification and regression:
+      - Classification: shifts labels to start from 0 (if min(y) == 1)
+      - Regression: leaves values unchanged
     """
+
     df = pd.read_csv(path)
     X = df.iloc[:, :-1].to_numpy(dtype=float)
-    y = df.iloc[:, -1].to_numpy()
+    y = df.iloc[:, -1].to_numpy(dtype=float)
 
-    # --- Normalize binary labels ---
     unique_vals = np.unique(y)
-    #if set(unique_vals) == {1, 2}:
-    #    y = y - 1
-    #elif set(unique_vals) == {-1, 1}:
-    #    y = (y + 1) // 2
 
-    return X, y - 1
+    # --- Heurystyka wykrywania typu zadania ---
+    if len(unique_vals) <= 10 and np.all(np.equal(np.mod(unique_vals, 1), 0)):
+        y = y.astype(int)
+        if np.min(y) == 1:
+            y = y - 1  # przesunięcie etykiet do [0..n_classes-1]
+        elif set(unique_vals) == {-1, 1}:
+            y = ((y + 1) // 2).astype(int)
+        print(f"[load_dataset] Detected CLASSIFICATION: unique labels {np.unique(y)}")
+    else:
+        y_mean, y_std = np.mean(y), np.std(y)
+        y = (y - y_mean) / (y_std if y_std > 0 else 1)
+        print(f"[load_dataset] Detected REGRESSION: normalized target (mean={y_mean:.3f}, std={y_std:.3f})")
+
+    # --- Ujednolicenie kształtu ---
+    if y.ndim == 1:
+        y = y.reshape(-1, 1)
+
+    return X, y
 
 
 def train_test_split(X, y, test_ratio=0.3, seed=42):
@@ -61,10 +74,9 @@ def accuracy(y_true, y_pred):
 
 
 def mse(y_true, y_pred):
-    """
-    Mean squared error for regression tasks.
-    """
-    return np.mean((y_true - y_pred) ** 2)
+    y_true = np.ravel(y_true)
+    y_pred = np.ravel(y_pred)
+    return float(np.mean((y_true - y_pred) ** 2))
 
 
 # === PLOTTING ===

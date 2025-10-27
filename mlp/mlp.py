@@ -217,19 +217,21 @@ class MLP:
             epochs: int = 1000,
             verbose: bool = False,
             one_hot_if_needed: bool = True,
-    ) -> list[float]:
-        # adjust target shape according to task type
-        if self.task == "binary":
-            # expect (m,1) with values 0/1
+    ) -> tuple[list[float], list[list[float]], list[float]]:
+
+        if self.task == "regression":
+            if Y.ndim == 1:
+                Y = Y.reshape(-1, 1)
+        elif self.task == "binary":
             Y = Y.reshape(-1, 1)
         elif self.task == "multiclass":
-            # expect one-hot (m, n_classes); if y has shape (m,) or (m,1) with class indices,
-            # create one-hot using output layer size.
             if one_hot_if_needed and (Y.ndim == 1 or (Y.ndim == 2 and Y.shape[1] == 1)):
                 Y = self._to_one_hot_encoding(Y, self.layer_sizes[-1])
 
         history: list[float] = []
+        accuracy_history: list[float] = []
         weight_history: list[list[float]] = []
+
         for ep in range(epochs):
             Y_pred = self.forward(X)
             grads = self.backward(Y)
@@ -237,17 +239,31 @@ class MLP:
             loss = float(self.loss_fn(Y, Y_pred))
             history.append(loss)
 
-            # Record weight norms
+            # --- Accuracy (tylko dla klasyfikacji) ---
+            if self.task in ["binary", "multiclass"]:
+                if self.task == "multiclass":
+                    y_true = np.argmax(Y, axis=1)
+                    y_pred = np.argmax(Y_pred, axis=1)
+                else:  # binary
+                    y_true = Y.ravel().astype(int)
+                    y_pred = (Y_pred.ravel() >= 0.5).astype(int)
+                acc = np.mean(y_true == y_pred)
+                accuracy_history.append(acc)
+            else:
+                accuracy_history.append(np.nan)
+
             current_weight_norms = [float(np.linalg.norm(Wl)) for Wl in self.W]
             weight_history.append(current_weight_norms)
 
             if verbose and ep % max(1, epochs // 10) == 0:
                 cur_lr = float(learning_rate) if learning_rate is not None else self.learning_rate
-                print(f"epoch={ep:4d}  loss={loss:.8f}  lr={cur_lr}")
+                print(f"epoch={ep:4d}  loss={loss:.8f}  acc={accuracy_history[-1]:.4f}  lr={cur_lr}")
 
         self.loss_history = history
         self.weight_history = weight_history
-        return history, weight_history
+        self.accuracy_history = accuracy_history
+
+        return history, weight_history, accuracy_history
 
 
 # ------------------------- EXAMPLES -------------------------
