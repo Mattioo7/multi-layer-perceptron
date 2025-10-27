@@ -8,6 +8,12 @@ def mse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 def d_mse(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
     return 2 * (y_pred - y_true) / y_true.size
 
+def mae(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    return np.mean(np.abs(y_pred - y_true))
+
+def d_mae(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
+    return np.sign(y_pred - y_true) / y_true.size
+
 def binary_cross_entropy(y_true: np.ndarray, y_pred: np.ndarray, eps: float = 1e-12) -> float:
     y_pred = np.clip(y_pred, eps, 1 - eps)
     return -np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
@@ -22,7 +28,20 @@ def cross_entropy(y_true: np.ndarray, y_pred: np.ndarray, eps: float = 1e-12) ->
 def d_cross_entropy(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
     return (y_pred - y_true) / y_true.shape[0]
 
-    return np.sign(y_pred - y_true) / y_true.size
+def categorical_cross_entropy(y_true: np.ndarray, y_pred: np.ndarray, eps: float = 1e-12) -> float:
+    y_pred = np.clip(y_pred, eps, 1.0)
+    return -np.mean(np.sum(y_true * np.log(y_pred), axis=1))
+
+def d_categorical_cross_entropy(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
+    return (y_pred - y_true) / y_true.shape[0]
+
+LOSSES = {
+    "mse": (mse, d_mse),
+    "mae": (mae, d_mae),
+    "binary_cross_entropy": (binary_cross_entropy, d_binary_cross_entropy),
+    "categorical_cross_entropy": (categorical_cross_entropy, d_categorical_cross_entropy),
+}
+
 if __name__ == "__main__":
     import numpy as np
 

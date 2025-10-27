@@ -5,14 +5,11 @@ from typing import Literal
 import numpy as np
 
 from .activations import sigmoid, d_sigmoid, identity, softmax, gelu, gelu_derivative
-from .losses import (
-    mse, d_mse,
-    binary_cross_entropy, d_binary_cross_entropy,
-    cross_entropy, d_cross_entropy
-)
+from .losses import LOSSES
 from .utils import plot_loss, plot_predictions, plot_decision_boundary, plot_weight_evolution
 
 TaskType = Literal["regression", "binary", "multiclass"]
+
 
 class MLP:
     layer_sizes: list[int]
@@ -36,20 +33,21 @@ class MLP:
     W: list[np.ndarray]
     b: list[np.ndarray]
 
-    Z: list[np.ndarray] | None # pre-activation values
-    A: list[np.ndarray] | None # post-activation values
+    Z: list[np.ndarray] | None  # pre-activation values
+    A: list[np.ndarray] | None  # post-activation values
 
     loss_history: list[float]
     weight_history: list[list[np.ndarray]]
 
     def __init__(
-        self,
-        layer_sizes: list[int],
-        task: TaskType,
-        activation: str,
-        learning_rate: float = 1e-2,
-        seed: int | None = None,
-        use_bias: bool = True,
+            self,
+            layer_sizes: list[int],
+            task: TaskType,
+            activation: str,
+            learning_rate: float = 1e-2,
+            seed: int | None = None,
+            use_bias: bool = True,
+            loss: str | None = None,
     ):
         assert len(layer_sizes) >= 2, "Provide at least [n_in, n_out]"
         assert task in ("regression", "binary", "multiclass"), \
@@ -82,7 +80,6 @@ class MLP:
             self.d_activation = gelu_derivative
         elif activation == "identity":
             self.activation = identity
-
             self.d_activation = lambda x: 1
         else:
             raise ValueError(f"Unknown activation function: {activation}")
@@ -91,20 +88,26 @@ class MLP:
         if task == "regression":
             self.out_activation = identity
             self.d_out_activation = identity
-            self.loss_fn = mse
-            self.d_loss_fn = d_mse
         elif task == "binary":
             self.out_activation = sigmoid
             self.d_out_activation = d_sigmoid
-            self.loss_fn = binary_cross_entropy
-            self.d_loss_fn = d_binary_cross_entropy
         elif task == "multiclass":
             self.out_activation = softmax
             self.d_out_activation = identity
-            self.loss_fn = cross_entropy
-            self.d_loss_fn = d_cross_entropy
         else:
             raise ValueError(f"Unknown task: {task}")
+
+        # --- Choose loss function ---
+        if loss is not None:
+            assert loss in LOSSES, f"Unknown loss: {loss}. Available: {list(LOSSES.keys())}"
+            self.loss_fn, self.d_loss_fn = LOSSES[loss]
+        else:
+            if task == "regression":
+                self.loss_fn, self.d_loss_fn = LOSSES["mse"]
+            elif task == "binary":
+                self.loss_fn, self.d_loss_fn = LOSSES["binary_cross_entropy"]
+            elif task == "multiclass":
+                self.loss_fn, self.d_loss_fn = LOSSES["categorical_cross_entropy"]
 
         # --- Initialize weights ---
         for l in range(self.n_layers):
@@ -126,8 +129,8 @@ class MLP:
             f"X has shape {X.shape}, expected (m, {self.layer_sizes[0]})"
         )
 
-        Z: list[np.ndarray] = [np.empty((0, 0))] # placeholder for input layer; # pre-activation values
-        A: list[np.ndarray] = [X] # activations, starting with input; # post-activation values
+        Z: list[np.ndarray] = [np.empty((0, 0))]  # placeholder for input layer; # pre-activation values
+        A: list[np.ndarray] = [X]  # activations, starting with input; # post-activation values
 
         # hidden layers
         for layer in range(self.n_layers - 1):
@@ -207,13 +210,13 @@ class MLP:
         return one_hot
 
     def fit(
-        self,
-        X: np.ndarray,
-        Y: np.ndarray,
-        learning_rate: float | None = None,
-        epochs: int = 1000,
-        verbose: bool = False,
-        one_hot_if_needed: bool = True,
+            self,
+            X: np.ndarray,
+            Y: np.ndarray,
+            learning_rate: float | None = None,
+            epochs: int = 1000,
+            verbose: bool = False,
+            one_hot_if_needed: bool = True,
     ) -> list[float]:
         # adjust target shape according to task type
         if self.task == "binary":
@@ -241,11 +244,10 @@ class MLP:
             if verbose and ep % max(1, epochs // 10) == 0:
                 cur_lr = float(learning_rate) if learning_rate is not None else self.learning_rate
                 print(f"epoch={ep:4d}  loss={loss:.8f}  lr={cur_lr}")
-        
+
         self.loss_history = history
         self.weight_history = weight_history
         return history, weight_history
-
 
 
 # ------------------------- EXAMPLES -------------------------
@@ -284,8 +286,6 @@ if __name__ == "__main__":
     plot_loss(hist_b, title="Binary Classification Training Loss")
     plot_decision_boundary(net_b, Xb, yb, title="Binary Classification Decision Boundary")
     plot_weight_evolution(weight_hist_b, title="Binary Classification Weight Evolution")
-
-
 
 # # ------------------------- EXAMPLES -------------------------
 # if __name__ == "__main__":

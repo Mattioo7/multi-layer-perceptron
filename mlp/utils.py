@@ -45,9 +45,19 @@ def train_test_split(X, y, test_ratio=0.3, seed=42):
 # === METRICS ===
 def accuracy(y_true, y_pred):
     """
-    Accuracy for classification tasks.
+    Computes classification accuracy (proportion of correct predictions).
+    Handles shape mismatches like (n,) vs (n,1) safely.
     """
-    return np.mean(y_true == y_pred)
+    # Spłaszczenie tablic do 1D (eliminuje błędy broadcastingu)
+    y_true = np.ravel(y_true)
+    y_pred = np.ravel(y_pred)
+
+    # Wyrównanie typów (gdy np. są floaty zamiast intów)
+    if y_true.dtype != y_pred.dtype:
+        y_pred = y_pred.astype(y_true.dtype)
+
+    # Oblicz dokładność
+    return float(np.mean(y_true == y_pred))
 
 
 def mse(y_true, y_pred):
@@ -123,4 +133,48 @@ def plot_weight_evolution(weight_history, title="Weight Evolution"):
     plt.ylabel("L2 Norm of Weights")
     plt.grid(True)
     plt.legend()
+    plt.show()
+
+
+def plot_dataset(X, y, title="Dataset visualization"):
+    """
+    Scatter plot for 2D dataset visualization.
+    Works for both regression and classification.
+    """
+    if X.shape[1] == 1:
+        plt.scatter(X, y, c='blue', s=20, alpha=0.7)
+        plt.xlabel("X")
+        plt.ylabel("y")
+    else:
+        plt.scatter(X[:, 0], X[:, 1], c=y.ravel(), cmap=plt.cm.RdYlBu, edgecolor="k", s=25)
+        plt.xlabel("Feature 1")
+        plt.ylabel("Feature 2")
+    plt.title(title)
+    plt.grid(True)
+    plt.show()
+
+
+def plot_accuracy(acc_history, title="Accuracy over epochs"):
+    """
+    Plot accuracy progression over training epochs.
+    """
+    plt.plot(acc_history, label="Accuracy", color="green")
+    plt.title(title)
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy")
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
+
+def plot_weights_together(weight_history, title="Weight Norms Evolution (All Layers)"):
+    """
+    Plots all layer weight norms on a single plot.
+    """
+    weight_history_np = np.array(weight_history)
+    plt.plot(weight_history_np)
+    plt.title(title)
+    plt.xlabel("Epoch")
+    plt.ylabel("L2 Norm")
+    plt.grid(True)
     plt.show()
