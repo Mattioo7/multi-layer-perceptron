@@ -78,6 +78,7 @@ class MLP:
             self.d_activation = gelu_derivative
         elif activation == "identity":
             self.activation = identity
+
             self.d_activation = lambda x: 1
         else:
             raise ValueError(f"Unknown activation function: {activation}")
@@ -104,7 +105,14 @@ class MLP:
         # --- Initialize weights ---
         for l in range(self.n_layers):
             n_in, n_out = layer_sizes[l], layer_sizes[l + 1]
-            W_l = np.random.randn(n_in, n_out) * 0.01
+            if activation in ("sigmoid", "identity"):
+                scale = np.sqrt(1.0 / n_in)
+            elif activation == "gelu":
+                scale = np.sqrt(2.0 / n_in)
+            else:
+                scale = 0.01
+            W_l = np.random.randn(n_in, n_out) * scale
+
             b_l = np.zeros((1, n_out), dtype=float)
             self.W.append(W_l)
             self.b.append(b_l)
