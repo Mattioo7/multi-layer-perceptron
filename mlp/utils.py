@@ -19,12 +19,12 @@ def load_dataset(path: str):
 
     # --- Normalize binary labels ---
     unique_vals = np.unique(y)
-    if set(unique_vals) == {1, 2}:
-        y = y - 1
-    elif set(unique_vals) == {-1, 1}:
-        y = (y + 1) // 2
+    #if set(unique_vals) == {1, 2}:
+    #    y = y - 1
+    #elif set(unique_vals) == {-1, 1}:
+    #    y = (y + 1) // 2
 
-    return X, y
+    return X, y - 1
 
 
 def train_test_split(X, y, test_ratio=0.3, seed=42):
