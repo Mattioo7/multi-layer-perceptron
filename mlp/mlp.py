@@ -48,6 +48,10 @@ class MLP:
             seed: int | None = None,
             use_bias: bool = True,
             loss: str | None = None,
+            momentum: bool = False,
+            beta: float = 0.9,
+            adaptive_lr: bool = False,
+            lr_decay: float = 0.99
     ):
         assert len(layer_sizes) >= 2, "Provide at least [n_in, n_out]"
         assert task in ("regression", "binary", "multiclass"), \
@@ -124,6 +128,15 @@ class MLP:
             self.W.append(W_l)
             self.b.append(b_l)
 
+        self.momentum = momentum
+        self.beta = beta
+        self.adaptive_lr = adaptive_lr
+        self.lr_decay = lr_decay
+
+        # Initialize velocity buffers for momentum
+        self.vW = [np.zeros_like(W) for W in self.W]
+        self.vb = [np.zeros_like(b) for b in self.b]
+
     def forward(self, X: np.ndarray) -> np.ndarray:
         assert X.ndim == 2 and X.shape[1] == self.layer_sizes[0], (
             f"X has shape {X.shape}, expected (m, {self.layer_sizes[0]})"
@@ -180,9 +193,16 @@ class MLP:
     def step(self, learning_rate: float | None, grads: tuple[list[np.ndarray], list[np.ndarray]]) -> None:
         eta = float(learning_rate) if learning_rate is not None else self.learning_rate
         dW, db = grads
+
         for l in range(self.n_layers):
-            self.W[l] -= eta * dW[l]
-            self.b[l] -= eta * db[l]
+            if self.momentum:
+                self.vW[l] = self.beta * self.vW[l] + (1 - self.beta) * dW[l]
+                self.vb[l] = self.beta * self.vb[l] + (1 - self.beta) * db[l]
+                self.W[l] -= eta * self.vW[l]
+                self.b[l] -= eta * self.vb[l]
+            else:
+                self.W[l] -= eta * dW[l]
+                self.b[l] -= eta * db[l]
 
     def compute_loss(self, X: np.ndarray, Y: np.ndarray) -> float:
         Y_pred = self.forward(X)
@@ -262,6 +282,9 @@ class MLP:
         self.loss_history = history
         self.weight_history = weight_history
         self.accuracy_history = accuracy_history
+
+        if self.adaptive_lr:
+            self.learning_rate *= self.lr_decay
 
         return history, weight_history, accuracy_history
 
