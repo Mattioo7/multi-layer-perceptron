@@ -86,10 +86,10 @@ def plot_loss(losses, title="Training loss"):
     """
     plt.plot(losses, label="Loss")
     plt.title(title)
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
+    plt.xlabel("Epoka")
+    plt.ylabel("Wartość")
     plt.grid(True)
-    plt.legend()
+    plt.legend("Funkcja straty")
     plt.show()
 
 
@@ -123,8 +123,8 @@ def plot_decision_boundary(model, X, y, title="Decision Boundary"):
     plt.contourf(xx, yy, Z, alpha=0.4, cmap=plt.cm.RdYlBu)
     plt.scatter(X[:, 0], X[:, 1], c=y.ravel(), s=20, edgecolor='k', cmap=plt.cm.RdYlBu)
     plt.title(title)
-    plt.xlabel("Feature 1")
-    plt.ylabel("Feature 2")
+    plt.xlabel("Cecha 1")
+    plt.ylabel("Cecha 2")
     plt.grid(True)
     plt.show()
 

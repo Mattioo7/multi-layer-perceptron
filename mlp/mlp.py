@@ -245,8 +245,8 @@ class MLP:
                     y_true = np.argmax(Y, axis=1)
                     y_pred = np.argmax(Y_pred, axis=1)
                 else:  # binary
-                    y_true = Y.ravel().astype(int)
-                    y_pred = (Y_pred.ravel() >= 0.5).astype(int)
+                    y_true = Y.ravel().astype(int) 
+                    y_pred = np.argmax(Y_pred, axis=1)
                 acc = np.mean(y_true == y_pred)
                 accuracy_history.append(acc)
             else:
