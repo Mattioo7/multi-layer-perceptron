@@ -18,9 +18,7 @@ def identity(x: ArrayLike) -> np.ndarray:
 
 
 def softmax(x: np.ndarray, axis: int = 1) -> np.ndarray:
-    x_shift = x - np.max(
-        x, axis=axis, keepdims=True
-    )  # for numerical stability, to avoid overflow
+    x_shift = x - np.max(x, axis=axis, keepdims=True)
     exps = np.exp(x_shift)
     return exps / np.sum(exps, axis=axis, keepdims=True)
 
@@ -29,18 +27,15 @@ def gelu(x: ArrayLike) -> np.ndarray:
     return 0.5 * x * (1 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * np.power(x, 3))))
 
 def gelu_derivative(x: ArrayLike) -> np.ndarray:
-    # Precompute common terms
     sqrt_2_pi = np.sqrt(2 / np.pi)
     x_cubed_term = 0.044715 * np.power(x, 3)
     tanh_arg = sqrt_2_pi * (x + x_cubed_term)
     tanh_val = np.tanh(tanh_arg)
 
-    # Compute the derivative components
     term1 = 0.5 * (1 + tanh_val)
     term2 = 0.5 * x * (1 - np.square(tanh_val))
     term3 = sqrt_2_pi * (1 + 3 * 0.044715 * np.square(x))
 
-    # Combine the terms to get the final derivative
     derivative = term1 + term2 * term3
     return derivative
 
