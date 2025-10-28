@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 
 # === DATA HANDLING ===
-def load_dataset(path: str):
+def load_dataset(path: str, verbose: bool = False):
     """
     Load a CSV dataset. Assumes all columns except the last are features (X)
     and the last column is the target (y).
@@ -27,11 +27,15 @@ def load_dataset(path: str):
             y = y - 1  # przesunięcie etykiet do [0..n_classes-1]
         elif set(unique_vals) == {-1, 1}:
             y = ((y + 1) // 2).astype(int)
-        print(f"[load_dataset] Detected CLASSIFICATION: unique labels {np.unique(y)}")
+
+        if verbose:
+            print(f"[load_dataset] Detected CLASSIFICATION: unique labels {np.unique(y)}")
     else:
         y_mean, y_std = np.mean(y), np.std(y)
         y = (y - y_mean) / (y_std if y_std > 0 else 1)
-        print(f"[load_dataset] Detected REGRESSION: normalized target (mean={y_mean:.3f}, std={y_std:.3f})")
+
+        if verbose:
+            print(f"[load_dataset] Detected REGRESSION: normalized target (mean={y_mean:.3f}, std={y_std:.3f})")
 
     # --- Ujednolicenie kształtu ---
     if y.ndim == 1:
