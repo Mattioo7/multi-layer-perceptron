@@ -275,16 +275,16 @@ class MLP:
             current_weight_norms = [float(np.linalg.norm(Wl)) for Wl in self.W]
             weight_history.append(current_weight_norms)
 
-            if verbose and ep % max(1, epochs // 10) == 0:
+            if verbose and ep % max(1, epochs // 20) == 0:
                 cur_lr = float(learning_rate) if learning_rate is not None else self.learning_rate
-                print(f"epoch={ep:4d}  loss={loss:.8f}  acc={accuracy_history[-1]:.4f}  lr={cur_lr}")
+                print(f"epoch={ep:4d}  loss={loss:.8f}  acc={accuracy_history[-1]:.4f}  lr={cur_lr:.4f}")
+
+            if self.adaptive_lr:
+                self.learning_rate *= self.lr_decay
 
         self.loss_history = history
         self.weight_history = weight_history
         self.accuracy_history = accuracy_history
-
-        if self.adaptive_lr:
-            self.learning_rate *= self.lr_decay
 
         return history, weight_history, accuracy_history
 

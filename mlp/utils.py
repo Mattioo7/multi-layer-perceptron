@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import struct
 
 
 def load_dataset(path: str, verbose: bool = False):
@@ -150,3 +151,25 @@ def plot_weights_together(weight_history, title="Weight Norms Evolution (All Lay
     plt.ylabel("L2 Norm")
     plt.grid(True)
     plt.show()
+
+
+def load_mnist_images(path: str) -> np.ndarray:
+    """
+    Wczytuje obrazy MNIST z pliku .idx3-ubyte.
+    Zwraca tablicę (N, 784) znormalizowaną do [0, 1].
+    """
+    with open(path, 'rb') as f:
+        magic, num, rows, cols = struct.unpack(">IIII", f.read(16))
+        images = np.frombuffer(f.read(), dtype=np.uint8)
+        images = images.reshape(num, rows * cols).astype(np.float32) / 255.0
+    return images
+
+def load_mnist_labels(path: str) -> np.ndarray:
+    """
+    Wczytuje etykiety MNIST z pliku .idx1-ubyte.
+    Zwraca tablicę (N, 1).
+    """
+    with open(path, 'rb') as f:
+        magic, num = struct.unpack(">II", f.read(8))
+        labels = np.frombuffer(f.read(), dtype=np.uint8).reshape(-1, 1)
+    return labels
